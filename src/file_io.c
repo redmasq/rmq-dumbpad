@@ -231,9 +231,21 @@ decode_utf16_lossy(const unsigned char *data, size_t size, int little_endian, WC
 }
 
 BOOL
-dumbpad_save_text_file(const WCHAR *path, const WCHAR *text, DumbpadTextEncoding encoding)
+dumbpad_save_text_file(
+    const WCHAR *path,
+    const WCHAR *text,
+    DumbpadTextEncoding encoding,
+    DumbpadLineEndingMode line_endings)
 {
-    size_t length = wcslen(text);
+    WCHAR *normalized = dumbpad_normalize_line_endings(text, line_endings);
+    const WCHAR *source;
+    size_t length;
+
+    if (!normalized) {
+        return FALSE;
+    }
+    source = normalized;
+    length = wcslen(source);
 
     switch (encoding) {
     case DUMBPAD_TEXT_ENCODING_ASCII:
@@ -243,27 +255,31 @@ dumbpad_save_text_file(const WCHAR *path, const WCHAR *text, DumbpadTextEncoding
             BOOL ok;
 
             if (!bytes) {
+                free(normalized);
                 return FALSE;
             }
             for (i = 0; i < length; ++i) {
-                if (text[i] > 0x7F) {
+                if (source[i] > 0x7F) {
                     free(bytes);
+                    free(normalized);
                     return FALSE;
                 }
-                bytes[i] = (unsigned char)text[i];
+                bytes[i] = (unsigned char)source[i];
             }
             ok = write_file_bytes(path, bytes, length);
             free(bytes);
+            free(normalized);
             return ok;
         }
     case DUMBPAD_TEXT_ENCODING_UTF8:
         {
-            int bytes_needed = WideCharToMultiByte(CP_UTF8, 0, text, -1, NULL, 0, NULL, NULL);
+            int bytes_needed = WideCharToMultiByte(CP_UTF8, 0, source, -1, NULL, 0, NULL, NULL);
             char *utf8;
             unsigned char *bytes;
             BOOL ok;
 
             if (bytes_needed <= 0) {
+                free(normalized);
                 return FALSE;
             }
             utf8 = (char *)malloc((size_t)bytes_needed);
@@ -271,11 +287,13 @@ dumbpad_save_text_file(const WCHAR *path, const WCHAR *text, DumbpadTextEncoding
             if (!utf8 || !bytes) {
                 free(utf8);
                 free(bytes);
+                free(normalized);
                 return FALSE;
             }
-            if (!WideCharToMultiByte(CP_UTF8, 0, text, -1, utf8, bytes_needed, NULL, NULL)) {
+            if (!WideCharToMultiByte(CP_UTF8, 0, source, -1, utf8, bytes_needed, NULL, NULL)) {
                 free(utf8);
                 free(bytes);
+                free(normalized);
                 return FALSE;
             }
             bytes[0] = 0xEF;
@@ -285,6 +303,7 @@ dumbpad_save_text_file(const WCHAR *path, const WCHAR *text, DumbpadTextEncoding
             ok = write_file_bytes(path, bytes, (size_t)bytes_needed + 2);
             free(utf8);
             free(bytes);
+            free(normalized);
             return ok;
         }
     case DUMBPAD_TEXT_ENCODING_UTF16_LE:
@@ -294,16 +313,18 @@ dumbpad_save_text_file(const WCHAR *path, const WCHAR *text, DumbpadTextEncoding
             BOOL ok;
 
             if (!bytes) {
+                free(normalized);
                 return FALSE;
             }
             bytes[0] = 0xFF;
             bytes[1] = 0xFE;
             for (i = 0; i < length; ++i) {
-                bytes[2 + (i * 2)] = (unsigned char)(text[i] & 0xFF);
-                bytes[3 + (i * 2)] = (unsigned char)((text[i] >> 8) & 0xFF);
+                bytes[2 + (i * 2)] = (unsigned char)(source[i] & 0xFF);
+                bytes[3 + (i * 2)] = (unsigned char)((source[i] >> 8) & 0xFF);
             }
             ok = write_file_bytes(path, bytes, (length * 2) + 2);
             free(bytes);
+            free(normalized);
             return ok;
         }
     case DUMBPAD_TEXT_ENCODING_UTF16_BE:
@@ -313,42 +334,49 @@ dumbpad_save_text_file(const WCHAR *path, const WCHAR *text, DumbpadTextEncoding
             BOOL ok;
 
             if (!bytes) {
+                free(normalized);
                 return FALSE;
             }
             bytes[0] = 0xFE;
             bytes[1] = 0xFF;
             for (i = 0; i < length; ++i) {
-                bytes[2 + (i * 2)] = (unsigned char)((text[i] >> 8) & 0xFF);
-                bytes[3 + (i * 2)] = (unsigned char)(text[i] & 0xFF);
+                bytes[2 + (i * 2)] = (unsigned char)((source[i] >> 8) & 0xFF);
+                bytes[3 + (i * 2)] = (unsigned char)(source[i] & 0xFF);
             }
             ok = write_file_bytes(path, bytes, (length * 2) + 2);
             free(bytes);
+            free(normalized);
             return ok;
         }
     case DUMBPAD_TEXT_ENCODING_ANSI:
         {
             BOOL used_default = FALSE;
-            int bytes_needed = WideCharToMultiByte(CP_ACP, WC_NO_BEST_FIT_CHARS, text, -1, NULL, 0, NULL, &used_default);
+            int bytes_needed = WideCharToMultiByte(CP_ACP, WC_NO_BEST_FIT_CHARS, source, -1, NULL, 0, NULL, &used_default);
             char *ansi;
             BOOL ok;
 
             if (bytes_needed <= 0 || used_default) {
+                free(normalized);
                 return FALSE;
             }
             ansi = (char *)malloc((size_t)bytes_needed);
             if (!ansi) {
+                free(normalized);
                 return FALSE;
             }
-            if (!WideCharToMultiByte(CP_ACP, WC_NO_BEST_FIT_CHARS, text, -1, ansi, bytes_needed, NULL, &used_default) || used_default) {
+            if (!WideCharToMultiByte(CP_ACP, WC_NO_BEST_FIT_CHARS, source, -1, ansi, bytes_needed, NULL, &used_default) || used_default) {
                 free(ansi);
+                free(normalized);
                 return FALSE;
             }
             ok = write_file_bytes(path, (const unsigned char *)ansi, (size_t)bytes_needed - 1);
             free(ansi);
+            free(normalized);
             return ok;
         }
     }
 
+    free(normalized);
     return FALSE;
 }
 
@@ -456,6 +484,7 @@ dumbpad_load_file_into_edit(HWND edit, const WCHAR *path, DumbpadFileLoadResult 
     if (result) {
         result->encoding = detected.encoding;
         result->has_invalid_unicode = detected.has_invalid_sequences || had_errors;
+        result->line_endings = dumbpad_detect_line_endings(wide);
     }
     free(wide);
     return TRUE;

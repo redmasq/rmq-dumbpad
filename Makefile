@@ -6,8 +6,8 @@ HOST_CFLAGS ?= -std=c11 -Wall -Wextra -Wpedantic -O0 -g
 LDFLAGS ?=
 LIBS = -luser32 -lkernel32 -lgdi32 -lcomdlg32
 
-SRC = src/main.c src/file_io.c src/settings.c src/text_encoding.c src/file_meta.c
-TEST_SRC = tests/test_main.c tests/test_text_encoding.c tests/test_file_meta.c src/text_encoding.c src/file_meta.c
+SRC = src/main.c src/file_io.c src/settings.c src/text_encoding.c src/file_meta.c src/line_endings.c
+TEST_SRC = tests/test_main.c tests/test_text_encoding.c tests/test_file_meta.c tests/test_line_endings.c src/text_encoding.c src/file_meta.c src/line_endings.c
 
 .PHONY: all win32 win64 test clean
 

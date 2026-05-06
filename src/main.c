@@ -7,6 +7,7 @@
 
 #include "app_types.h"
 #include "file_io.h"
+#include "line_endings.h"
 #include "settings.h"
 
 #define APP_CLASS_NAME L"DumbpadMainWindow"
@@ -55,6 +56,8 @@ typedef struct AppState {
     long pending_goto_line;
     DumbpadTextEncoding current_encoding;
     BOOL has_invalid_unicode;
+    DumbpadLineEndingMode current_line_endings;
+    DumbpadLineEndingMode detected_line_endings;
 } AppState;
 
 static AppState g_app;
@@ -84,13 +87,18 @@ set_title(void)
 {
     WCHAR title[MAX_PATH + 96];
     WCHAR encoding[24];
+    WCHAR line_endings[16];
     const WCHAR *name = g_app.file_path[0] ? g_app.file_path : L"(untitled)";
     MultiByteToWideChar(CP_ACP, 0, dumbpad_text_encoding_name(g_app.current_encoding), -1,
         encoding, (int)(sizeof(encoding) / sizeof(encoding[0])));
-    swprintf(title, sizeof(title) / sizeof(title[0]), L"%ls%ls [%ls]%ls - %ls",
+    MultiByteToWideChar(CP_ACP, 0, dumbpad_line_ending_name(g_app.current_line_endings), -1,
+        line_endings, (int)(sizeof(line_endings) / sizeof(line_endings[0])));
+    swprintf(title, sizeof(title) / sizeof(title[0]), L"%ls%ls [%ls/%ls]%ls%ls - %ls",
         g_app.modified ? L"*" : L"",
         name,
         encoding,
+        line_endings,
+        g_app.detected_line_endings == DUMBPAD_LINE_ENDINGS_MIXED ? L" [mixed line endings]" : L"",
         g_app.has_invalid_unicode ? L" [invalid unicode]" : L"",
         APP_TITLE);
     SetWindowTextW(g_app.window, title);
@@ -130,12 +138,13 @@ save_current_file(const WCHAR *path)
     if (!text) {
         return FALSE;
     }
-    ok = dumbpad_save_text_file(path, text, g_app.current_encoding);
+    ok = dumbpad_save_text_file(path, text, g_app.current_encoding, g_app.current_line_endings);
     free(text);
     if (ok) {
         wcsncpy(g_app.file_path, path, MAX_PATH - 1);
         g_app.file_path[MAX_PATH - 1] = L'\0';
         g_app.has_invalid_unicode = FALSE;
+        g_app.detected_line_endings = g_app.current_line_endings;
         mark_modified(FALSE);
     }
     return ok;
@@ -244,6 +253,8 @@ do_open(void)
             g_app.file_path[MAX_PATH - 1] = L'\0';
             g_app.current_encoding = load_result.encoding;
             g_app.has_invalid_unicode = load_result.has_invalid_unicode;
+            g_app.current_line_endings = load_result.line_endings.preferred_mode;
+            g_app.detected_line_endings = load_result.line_endings.detected_mode;
             mark_modified(FALSE);
             if (g_app.has_invalid_unicode) {
                 MessageBoxW(g_app.window,
@@ -649,6 +660,8 @@ window_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
                 g_app.file_path[0] = L'\0';
                 g_app.current_encoding = DUMBPAD_TEXT_ENCODING_UTF8;
                 g_app.has_invalid_unicode = FALSE;
+                g_app.current_line_endings = DUMBPAD_LINE_ENDINGS_CRLF;
+                g_app.detected_line_endings = DUMBPAD_LINE_ENDINGS_NONE;
                 mark_modified(FALSE);
             }
             return 0;
@@ -748,6 +761,8 @@ wWinMain(HINSTANCE instance, HINSTANCE prev_instance, PWSTR cmd_line, int show_c
     g_app.pending_goto_line = 0;
     g_app.current_encoding = DUMBPAD_TEXT_ENCODING_UTF8;
     g_app.has_invalid_unicode = FALSE;
+    g_app.current_line_endings = DUMBPAD_LINE_ENDINGS_CRLF;
+    g_app.detected_line_endings = DUMBPAD_LINE_ENDINGS_NONE;
 
     ZeroMemory(&wc, sizeof(wc));
     wc.lpfnWndProc = window_proc;

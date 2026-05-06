@@ -188,6 +188,11 @@ Goals:
 - Stabilize plain text search and replace
 - Add whole-word and case-sensitive options
 - Add optional glob-style matching with `*`, `?`, `%{min,max}`, and escapes
+- Add an optional extended mode for escaped matching:
+  - newlines, including any newline or specific newline styles
+  - tabs and other common escaped controls
+  - character escapes such as `\x01`, `\007`, `\d13`, and similar forms
+- Allow extended mode to be combined with glob mode where practical
 - Evaluate whether a small regex-like engine is practical under current constraints
 
 Acceptance:

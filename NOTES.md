@@ -53,6 +53,7 @@ Desired boundaries:
   - Plain text search
   - Replace
   - Glob-style matcher
+  - Extended escaped matcher for control characters and newline-aware matching
   - Optional limited regex-style engine
   - Byte-pattern matcher for hex mode
 - `settings`:
@@ -144,6 +145,7 @@ Unit testing is feasible for a meaningful subset of this project, even though th
   - plain forward/backward search
   - replace-one / replace-all behavior
   - glob matching semantics for `*`, `?`, `%{min,max}`, and escapes
+  - extended search escape parsing for tabs, control bytes, and newline forms
   - byte-pattern matching for future hex mode
 - Position parsing
   - parse `line`
