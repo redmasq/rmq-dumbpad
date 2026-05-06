@@ -23,7 +23,7 @@ Recommended milestone flow:
 ### Phase 1: Foundation
 
 Primary focus:
-- `Ticket 001: Build-Clean Win32 Scaffold`
+- `Ticket 001 / DUMB-1: Build-Clean Win32 Scaffold`
 - early separation of concerns work around `file_io`, `settings`, and shared core types
 
 Exit criteria:
@@ -35,9 +35,9 @@ Exit criteria:
 
 Primary focus:
 - `Ticket 002: Encoding-Aware Load/Save`
-- `Ticket 003: Line Ending Modes`
-- baseline work from `Ticket 019: Invalid Unicode Handling And Normalization`
-- test coverage pressure from `Ticket 018: Allocation Failure And Bounds Testing`
+- `Ticket 003 / DUMB-3: Line Ending Modes`
+- baseline work from `Ticket 019 / DUMB-19: Invalid Unicode Handling And Normalization`
+- test coverage pressure from `Ticket 018 / DUMB-18: Allocation Failure And Bounds Testing`
 
 Why next:
 - these define the behavior of the document itself
@@ -52,11 +52,11 @@ Exit criteria:
 
 Primary focus:
 - `Ticket 005: Theme And Font Polish`
-- `Ticket 006: Word Wrap`
-- `Ticket 007: Insert / Overwrite Editing`
-- `Ticket 010: Settings Persistence Fallback`
-- `Ticket 009: Reload From Disk`
-- basic passive-mode support from `Ticket 008: File Access Mode And External Change Detection`
+- `Ticket 006 / DUMB-6: Word Wrap`
+- `Ticket 007 / DUMB-7: Insert / Overwrite Editing`
+- `Ticket 010 / DUMB-10: Settings Persistence Fallback`
+- `Ticket 009 / DUMB-9: Reload From Disk`
+- basic passive-mode support from `Ticket 008 / DUMB-8: File Access Mode And External Change Detection`
 
 Why here:
 - these features improve the normal editor path without forcing a new document model
@@ -69,7 +69,7 @@ Exit criteria:
 
 Primary focus:
 - `Ticket 004: Find / Replace Engine`
-- `Ticket 011: Go To And Positioning`
+- `Ticket 011 / DUMB-12: Go To And Positioning`
 
 Why here:
 - search and navigation should build on the finalized text/line-ending model
@@ -83,7 +83,7 @@ Exit criteria:
 
 Primary focus:
 - `Ticket 017: Anchor-Based Selection`
-- deeper work from `Ticket 008: File Access Mode And External Change Detection`
+- deeper work from `Ticket 008 / DUMB-8: File Access Mode And External Change Detection`
 
 Why here:
 - anchor-based selection can become the shared range model across normal, raw, large-file, and hex modes
@@ -97,9 +97,9 @@ Exit criteria:
 
 Primary focus:
 - `Ticket 015: Large File Read Mode`
-- `Ticket 012: Raw Edit Mode`
-- `Ticket 014: Binary / Hex Mode`
-- `Ticket 016: Optional Large File Edit Mode`
+- `Ticket 012 / DUMB-11: Raw Edit Mode`
+- `Ticket 014 / DUMB-14: Binary / Hex Mode`
+- `Ticket 016 / DUMB-16: Optional Large File Edit Mode`
 
 Why deferred:
 - these are the most architecture-sensitive features
@@ -112,26 +112,26 @@ Exit criteria:
 ### Priority Summary
 
 Must-have before advanced modes:
-- `001`, `002`, `003`, `004`, `008`, `009`, `010`, `011`, `019`
+- `001 / DUMB-1`, `002 / DUMB-2`, `003 / DUMB-3`, `004 / DUMB-4`, `008 / DUMB-8`, `009 / DUMB-9`, `010 / DUMB-10`, `011 / DUMB-12`, `019 / DUMB-19`
 
 High-value plain-editor features:
-- `005`, `006`, `007`
+- `005 / DUMB-5`, `006 / DUMB-6`, `007 / DUMB-7`
 
 Cross-mode infrastructure:
-- `017`
+- `017 / DUMB-17`
 
 Defer until architecture is ready:
-- `012`, `014`, `015`, `016`
+- `012 / DUMB-11`, `014 / DUMB-14`, `015 / DUMB-15`, `016 / DUMB-16`
 
 Always-on quality work:
-- `018`
-- `019`
+- `018 / DUMB-18`
+- `019 / DUMB-19`
 
 Distribution and packaging:
-- `020`
-- `021`
-- `022`
-- `023`
+- `020 / DUMB-20`
+- `021 / DUMB-21`
+- `022 / DUMB-22`
+- `023 / DUMB-23`
 
 ### Important Constraint
 
@@ -139,7 +139,7 @@ Do not let large-file, raw, or hex requirements distort the small-file text edit
 
 The normal text editor path should become stable first, then shared abstractions can be widened to support the more specialized modes.
 
-## Ticket 001: Build-Clean Win32 Scaffold
+## Ticket 001 / DUMB-1: Build-Clean Win32 Scaffold
 
 Status: In progress
 
@@ -153,7 +153,7 @@ Acceptance:
 - `make win64` succeeds
 - Resulting binaries launch a main window with the editor control and menus
 
-## Ticket 002: Encoding-Aware Load/Save
+## Ticket 002 / DUMB-2: Encoding-Aware Load/Save
 
 Status: Pending
 
@@ -167,7 +167,7 @@ Acceptance:
 - Open/save round-trips basic files in each supported encoding
 - UI reports or remembers current encoding choice
 
-## Ticket 003: Line Ending Modes
+## Ticket 003 / DUMB-3: Line Ending Modes
 
 Status: Pending
 
@@ -180,7 +180,7 @@ Acceptance:
 - Save can force each line-ending mode
 - Open detects the dominant or exact mode and exposes it in UI state
 
-## Ticket 004: Find / Replace Engine
+## Ticket 004 / DUMB-4: Find / Replace Engine
 
 Status: Pending
 
@@ -199,7 +199,7 @@ Acceptance:
 - Standard search and replace works reliably in both directions
 - Pattern mode has documented semantics and passing test cases
 
-## Ticket 005: Theme And Font Polish
+## Ticket 005 / DUMB-5: Theme And Font Polish
 
 Status: Pending
 
@@ -212,7 +212,7 @@ Acceptance:
 - Theme override behaves consistently after relaunch
 - Font family and size survive restart when settings are available
 
-## Ticket 006: Word Wrap
+## Ticket 006 / DUMB-6: Word Wrap
 
 Status: Pending
 
@@ -227,7 +227,7 @@ Acceptance:
 - Wrapped and unwrapped modes both remain usable for navigation and editing
 - Wrap preference is restored on restart when settings are available
 
-## Ticket 007: Insert / Overwrite Editing
+## Ticket 007 / DUMB-7: Insert / Overwrite Editing
 
 Status: Pending
 
@@ -242,7 +242,7 @@ Acceptance:
 - Text entry behaves correctly in both modes
 - The current mode is visible enough that it is not surprising to the user
 
-## Ticket 008: File Access Mode And External Change Detection
+## Ticket 008 / DUMB-8: File Access Mode And External Change Detection
 
 Status: Pending
 
@@ -258,7 +258,7 @@ Acceptance:
 - Passive mode can detect likely on-disk changes after open/save
 - The app warns before overwriting or continuing with stale in-memory content
 
-## Ticket 009: Reload From Disk
+## Ticket 009 / DUMB-9: Reload From Disk
 
 Status: Pending
 
@@ -272,7 +272,7 @@ Acceptance:
 - Dirty buffers require confirmation before reload
 - Reload updates the editor content and file metadata correctly
 
-## Ticket 010: Settings Persistence Fallback
+## Ticket 010 / DUMB-10: Settings Persistence Fallback
 
 Status: Pending
 
@@ -285,7 +285,7 @@ Acceptance:
 - Missing `advapi32.dll` disables settings features without crashing
 - UI clearly reflects availability
 
-## Ticket 011: Go To And Positioning
+## Ticket 011 / DUMB-12: Go To And Positioning
 
 Status: Pending
 
@@ -297,7 +297,7 @@ Goals:
 Acceptance:
 - User can jump accurately using the requested forms
 
-## Ticket 012: Raw Edit Mode
+## Ticket 012 / DUMB-11: Raw Edit Mode
 
 Status: Pending
 
@@ -310,7 +310,7 @@ Acceptance:
 - Raw mode preserves control characters exactly
 - Insert-control dialog works for core control values
 
-## Ticket 013: Clipboard Special
+## Ticket 013 / DUMB-13: Clipboard Special
 
 Status: Pending
 
@@ -322,7 +322,7 @@ Goals:
 Acceptance:
 - User can choose from at least a few meaningful clipboard formats
 
-## Ticket 014: Binary / Hex Mode
+## Ticket 014 / DUMB-14: Binary / Hex Mode
 
 Status: Pending
 
@@ -336,7 +336,7 @@ Acceptance:
 - Open-as-binary works on arbitrary files
 - Byte search handles exact and wildcard patterns
 
-## Ticket 015: Large File Read Mode
+## Ticket 015 / DUMB-15: Large File Read Mode
 
 Status: Pending
 
@@ -353,7 +353,7 @@ Acceptance:
 - User can navigate and copy data from the active chunk
 - The app clearly indicates that this is a chunked passive-mode workflow
 
-## Ticket 016: Optional Large File Edit Mode
+## Ticket 016 / DUMB-16: Optional Large File Edit Mode
 
 Status: Pending
 
@@ -367,7 +367,7 @@ Acceptance:
 - Either a safe editing design is approved and implemented, or the feature remains intentionally unsupported
 - The user experience makes the distinction between read mode and editable mode clear
 
-## Ticket 017: Anchor-Based Selection
+## Ticket 017 / DUMB-17: Anchor-Based Selection
 
 Status: Pending
 
@@ -383,7 +383,7 @@ Acceptance:
 - Anchored selections behave predictably in normal text mode, raw mode, and large-file mode
 - Large-file anchored copy works across chunk boundaries
 
-## Ticket 018: Allocation Failure And Bounds Testing
+## Ticket 018 / DUMB-18: Allocation Failure And Bounds Testing
 
 Status: Pending
 
@@ -398,7 +398,7 @@ Acceptance:
 - Bounds-sensitive helpers have table-driven tests for edge cases and invalid inputs
 - New core logic is expected to handle allocation and bounds failures deliberately rather than implicitly
 
-## Ticket 019: Invalid Unicode Handling And Normalization
+## Ticket 019 / DUMB-19: Invalid Unicode Handling And Normalization
 
 Status: Pending
 
@@ -424,7 +424,7 @@ Acceptance:
 - Baseline UI exists for user awareness and normalization action
 - Later visual highlighting and intent-preserving repair paths remain architecturally possible
 
-## Ticket 020: Portable Build And Optional Windows Installer
+## Ticket 020 / DUMB-20: Portable Build And Optional Windows Installer
 
 Status: Pending
 
@@ -444,7 +444,7 @@ Acceptance:
 - An optional installer can place the app in the Start Menu and provide uninstall support
 - Packaging steps are documented clearly enough to reproduce release artifacts
 
-## Ticket 021: Optional Help System Integration
+## Ticket 021 / DUMB-21: Optional Help System Integration
 
 Status: Pending
 
@@ -461,7 +461,7 @@ Acceptance:
 - Missing optional help components fail gracefully without breaking the editor
 - Help content format and packaging approach are documented well enough for future updates
 
-## Ticket 022: Menu Keybindings And Accelerators
+## Ticket 022 / DUMB-22: Menu Keybindings And Accelerators
 
 Status: Pending
 
@@ -476,7 +476,7 @@ Acceptance:
 - Menu text and accelerator handling stay in sync
 - Shortcut behavior is documented and testable enough to avoid accidental regressions
 
-## Ticket 023: Display And Insert Lower ASCII Control Characters
+## Ticket 023 / DUMB-23: Display And Insert Lower ASCII Control Characters
 
 Status: Pending
 
