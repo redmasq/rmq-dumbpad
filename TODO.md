@@ -13,42 +13,72 @@ Working rule:
 
 Recommended milestone flow:
 
-1. Build-clean scaffold and early refactor
-2. Encoding and line-ending foundation
-3. Core editor usability features
-4. Search and navigation improvements
-5. Selection model and cross-mode groundwork
-6. Advanced modes: raw, large-file, binary/hex
+1. Build-clean scaffold and resource/build plumbing
+2. Core architecture extraction and `main.c` reduction
+3. Text file correctness, encoding, and defensive file I/O
+4. Core editor usability and persistence
+5. Search, navigation, and shared command logic
+6. Selection model and cross-mode metadata groundwork
+7. Advanced modes: raw, large-file, binary/hex
+
+Re-evaluated ordering notes:
+- `DUMB-24` should move very early because resource integration affects menus, dialogs, identifiers, and the build itself; it is easier to settle before more UI surface area accumulates.
+- `DUMB-26` also belongs early because future features will otherwise keep inflating `main.c` and make later extraction harder.
+- `DUMB-25` should land alongside encoding and line-ending work because file-format correctness is not really complete without short-read, short-write, empty-file, and malformed-input behavior being nailed down.
+- `DUMB-27` is broad enough to stay ongoing, but its first meaningful tranche should happen after the early refactor and before advanced modes multiply invariants and edge cases.
 
 ### Phase 1: Foundation
 
 Primary focus:
 - `Ticket 001 / DUMB-1: Build-Clean Win32 Scaffold`
-- early separation of concerns work around `file_io`, `settings`, and shared core types
+- `Ticket 024 / DUMB-24: Convert Dialogs And UI Strings To Resource File`
+
+Why first:
+- the app needs a stable Win32 and build baseline before later changes are meaningful
+- resource compilation changes menu/dialog plumbing and should settle while the UI surface is still small
 
 Exit criteria:
 - both Windows targets build cleanly
+- resource compilation is part of both Windows builds
+- dialogs and shared resource identifiers are no longer purely ad hoc or in-memory
+
+### Phase 2: Architecture And Invariants
+
+Primary focus:
+- `Ticket 026 / DUMB-26: Refactor And Reduce Application Complexity In main.c`
+- baseline defensive cleanup from `Ticket 027 / DUMB-27: Broader Defensive Programming And Invariant Checks`
+- early separation of concerns work around `file_io`, `settings`, and shared core types
+
+Why next:
+- every later feature benefits from having cleaner module boundaries
+- defensive checks become easier to add once responsibilities are separated instead of hidden inside message handlers
+
+Exit criteria:
 - host-side unit tests exist for extracted pure logic
 - `main.c` is no longer the only place where behavior lives
+- common invariants and failure paths have an obvious home rather than being scattered across UI code
 
-### Phase 2: Text File Core
+### Phase 3: Text File Core
 
 Primary focus:
 - `Ticket 002: Encoding-Aware Load/Save`
 - `Ticket 003 / DUMB-3: Line Ending Modes`
+- `Ticket 025 / DUMB-25: Defensive File I/O Sanity Checks`
 - baseline work from `Ticket 019 / DUMB-19: Invalid Unicode Handling And Normalization`
 - test coverage pressure from `Ticket 018 / DUMB-18: Allocation Failure And Bounds Testing`
 
 Why next:
 - these define the behavior of the document itself
 - many later features depend on encoding and line-ending correctness
+- file I/O hardening belongs here because malformed input and partial reads are core document behavior, not a late cleanup item
 
 Exit criteria:
 - text files open/save reliably across the supported encodings
 - line-ending handling is explicit and testable
 - invalid Unicode is detected and surfaced in a basic, non-destructive way
+- malformed, empty, and partially read files fail predictably without destabilizing the editor
 
-### Phase 3: Core Editor UX
+### Phase 4: Core Editor UX
 
 Primary focus:
 - `Ticket 005: Theme And Font Polish`
@@ -65,7 +95,7 @@ Why here:
 Exit criteria:
 - the plain text editor feels coherent and dependable for ordinary use
 
-### Phase 4: Search And Navigation
+### Phase 5: Search And Navigation
 
 Primary focus:
 - `Ticket 004: Find / Replace Engine`
@@ -73,13 +103,13 @@ Primary focus:
 
 Why here:
 - search and navigation should build on the finalized text/line-ending model
-- this is also a good stage to continue extracting pure logic for tests
+- this is also a good stage to continue the extraction started in `DUMB-26`, especially around editor commands and find/replace helpers
 
 Exit criteria:
 - normal text find/replace is solid
 - line, line+column, and offset navigation design is settled
 
-### Phase 5: Shared Selection And Metadata Infrastructure
+### Phase 6: Shared Selection And Metadata Infrastructure
 
 Primary focus:
 - `Ticket 017: Anchor-Based Selection`
@@ -93,7 +123,7 @@ Exit criteria:
 - selection/range logic is no longer tied only to the stock edit control
 - external-change tracking has reusable core logic
 
-### Phase 6: Advanced Modes
+### Phase 7: Advanced Modes
 
 Primary focus:
 - `Ticket 015: Large File Read Mode`
@@ -112,7 +142,7 @@ Exit criteria:
 ### Priority Summary
 
 Must-have before advanced modes:
-- `001 / DUMB-1`, `002 / DUMB-2`, `003 / DUMB-3`, `004 / DUMB-4`, `008 / DUMB-8`, `009 / DUMB-9`, `010 / DUMB-10`, `011 / DUMB-12`, `019 / DUMB-19`
+- `001 / DUMB-1`, `002 / DUMB-2`, `003 / DUMB-3`, `004 / DUMB-4`, `008 / DUMB-8`, `009 / DUMB-9`, `010 / DUMB-10`, `011 / DUMB-12`, `019 / DUMB-19`, `024 / DUMB-24`, `025 / DUMB-25`, `026 / DUMB-26`
 
 High-value plain-editor features:
 - `005 / DUMB-5`, `006 / DUMB-6`, `007 / DUMB-7`
@@ -126,6 +156,7 @@ Defer until architecture is ready:
 Always-on quality work:
 - `018 / DUMB-18`
 - `019 / DUMB-19`
+- `027 / DUMB-27`
 
 Distribution and packaging:
 - `020 / DUMB-20`
@@ -493,3 +524,82 @@ Acceptance:
 - The app can insert selected lower ASCII control characters intentionally
 - Display behavior for those characters is defined and consistent for the active mode
 - The chosen representation does not silently corrupt or mislead about stored content
+
+## Ticket 024 / DUMB-24: Convert Dialogs And UI Strings To Resource File
+
+Status: Pending
+
+Goals:
+- Add a `.rc` resource file and shared `resource.h` identifiers
+- Move the current in-memory `Go To` dialog template into a resource-backed dialog
+- Move menu, dialog, and string constants into resources where that improves maintainability
+- Confirm MinGW and `windres` support for both `win32` and `win64` builds
+- Investigate lightweight i18n/localization groundwork without adding hard runtime DLL dependencies
+- Keep localization support optional if the dependency cost is not worth it yet
+
+Acceptance:
+- `make win32` and `make win64` compile the resource file into the executable
+- `Go To` uses a resource template instead of an in-memory `DLGTEMPLATE`
+- Resource IDs are shared cleanly between C and `.rc` files
+- Missing optional localization support does not block app launch
+- Dependency surface remains aligned with the project's minimalist goals
+
+## Ticket 025 / DUMB-25: Add Defensive File I/O Sanity Checks And Edge-Case Handling
+
+Status: Pending
+
+Goals:
+- Verify full byte counts for `WriteFile` operations
+- Verify `ReadFile` byte counts and distinguish partial reads from outright failure
+- Treat partial reads as degraded but viewable when practical rather than crashing or discarding useful data
+- Add explicit handling and tests for empty files, NUL-only files, truncated Unicode sequences, and oversized size calculations
+- Ensure `SetWindowTextW` and related paths never receive invalid or null pointers
+- Preserve predictable behavior under malformed input without adding new mandatory runtime dependencies
+
+Acceptance:
+- File writes verify `written == requested`
+- Empty files load successfully as empty documents
+- Malformed or truncated files do not crash the editor
+- Partial read scenarios are detectable and surfaced cleanly
+- New unit tests cover malformed and edge-case inputs
+
+## Ticket 026 / DUMB-26: Refactor And Reduce Application Complexity In main.c
+
+Status: Pending
+
+Goals:
+- Identify responsibilities currently embedded in `main.c`
+- Extract document state management into dedicated modules
+- Extract search and find/replace logic into testable helpers where practical
+- Separate UI dispatch and Win32 event handling from editor behavior
+- Reduce direct coupling between Win32 message handling and document or file logic
+- Preserve current behavior while improving maintainability
+
+Acceptance:
+- `main.c` primarily acts as a Win32 and UI adapter
+- File and document behavior is testable without a GUI window
+- Find/replace behavior no longer depends entirely on inline Win32 message handling
+- Existing tests keep passing and new tests are added where appropriate
+- No functional regressions are introduced in current editor behavior
+
+## Ticket 027 / DUMB-27: Introduce Broader Defensive Programming And Invariant Checks
+
+Status: Pending
+
+Goals:
+- Review public and internal APIs for unchecked assumptions
+- Add argument validation where appropriate
+- Add overflow, size, and integer truncation guards
+- Standardize error handling and cleanup paths
+- Reduce risk of invalid state propagation
+- Add assertions or debug-only invariant checks where they improve confidence without bloating the design
+- Improve consistency of allocation-failure handling
+- Ensure malformed user or file input cannot destabilize application state
+
+Acceptance:
+- Common failure paths are explicit and testable
+- Integer truncation and overflow boundaries are guarded
+- Allocation failures are handled consistently
+- New tests cover defensive and error scenarios
+- Application remains stable under malformed or hostile input
+- No new mandatory runtime dependencies are introduced
